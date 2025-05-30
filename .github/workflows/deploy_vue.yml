@@ -33,17 +33,17 @@ jobs:
           echo "..."
           echo "SSH username: ${{ secrets.SSH_USER_NAME }}"
           echo "Target host: ${{ secrets.PROD_HOST }}"
-
-      - name: Check SSH Connectivity
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.PROD_HOST }}
-          username: ${{ secrets.SSH_USER_NAME }}
-          key: ${{ secrets.SSH_KEY }}
-          script: |
-            echo "SSH connection successful!"
-            whoami
-            hostname -I
+          
+      - name: Configure SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.PROD_HOST }} >> ~/.ssh/known_hosts
+          
+      - name: Test SSH connection
+        run: |
+          ssh -vvv -i ~/.ssh/id_rsa ${{ secrets.SSH_USER_NAME }}@${{ secrets.PROD_HOST }} 'echo "Connection successful!"'
 
       - name: set the ubuntu user as the owner of the /var/www/html directory for ubuntu 24+
         uses: appleboy/ssh-action@v1.2.0
